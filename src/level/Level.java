@@ -20,13 +20,15 @@ public class Level {
     public Level(final Player player) {
         this.player = player;
         player.x = 980;
-        player.y = 100;
+        player.y = 700;
     }
 
     public void generateLevel() {
 
         new Tile(200, 1000, 1500, 50, Color.BLUE);
         new Tile(1000, 850, 200, 50, Color.RED);
+        new Tile(900, 800, 350, 150, Color.RED);
+        new Tile(300, 950, 200, 200, Color.RED);
     }
 
     private void loadLevel(String path) {

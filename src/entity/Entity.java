@@ -1,6 +1,11 @@
 package entity;
 
+import graphics.Sprite;
+
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +16,7 @@ public abstract class Entity {
     public int x, y;
     int width, height;
     Color color;
+    double xMove, yMove;
 
     Entity(int x, int y, int width, int height, Color color) {
         this.x = x;
@@ -25,46 +31,106 @@ public abstract class Entity {
 
     public abstract void draw(Graphics g);
 
-
-    static int returnCollisionDistanceRight(Entity entity, int dist) {
-        for (Entity otherEntity : allEntities) {
-            if (entity.equals(otherEntity)) continue;
-            if (entity.x + entity.width + dist >= otherEntity.x && entity.x < otherEntity.x + otherEntity.width && entity.y + entity.height > otherEntity.y && !(entity.y > otherEntity.y + otherEntity.height)) {
-                return otherEntity.x - entity.x - entity.width - 1;
+    static int possibleTravelDistanceRight(Entity e, int desiredDist) {
+        for (Entity e2 : allEntities) {
+            if (e.equals(e2)) continue;
+            if (rightSideXPos(e) + desiredDist >= e2.x &&
+                    !e.isRightOf(e2) &&
+                    !(downSideYPos(e) + e.yMove < e2.y) &&
+                    !(e.y + e.yMove > downSideYPos(e2))) {
+                return e.rightDistanceTo(e2) - 1;
             }
         }
-        return dist;
+        return desiredDist;
     }
 
-    static int returnCollisionDistanceLeft(Entity entity, int dist) {
-        for (Entity otherEntity : allEntities) {
-            if (entity.equals(otherEntity)) continue;
-            if (entity.x + dist <= otherEntity.x + otherEntity.width && entity.x + entity.width > otherEntity.x && entity.y + entity.height > otherEntity.y && !(entity.y > otherEntity.y + otherEntity.height)) {
-                return otherEntity.x + otherEntity.width - entity.x + 1;
+    static int possibleTravelDistanceLeft(Entity e, int desiredDist) {
+        for (Entity e2 : allEntities) {
+            if (e.equals(e2)) continue;
+            if (e.x + desiredDist <= rightSideXPos(e2) &&
+                    !e.isLeftOf(e2) &&
+                    !(downSideYPos(e) + e.yMove < e2.y) &&
+                    !(e.y + e.yMove > downSideYPos(e2))) {
+                return e.leftDistanceTo(e2) + 1;
             }
         }
-        return dist;
+        return desiredDist;
     }
 
-    static double returnCollisionDistanceUp(Entity entity, double dist) {
-        for (Entity otherEntity : allEntities) {
-            if (entity.equals(otherEntity)) continue;
-            if (entity.y + dist <= otherEntity.y + otherEntity.height && entity.y + entity.height > otherEntity.y && entity.x + entity.width > otherEntity.x && !(entity.x > otherEntity.x + otherEntity.width)) {
-                return otherEntity.y + otherEntity.height - entity.y + 1;
+    static double possibleTravelDistanceUp(Entity e, double desiredDist) {
+        for (Entity e2 : allEntities) {
+            if (e.equals(e2)) continue;
+            if (e.y + desiredDist <= downSideYPos(e2) &&
+                    !e.isLeftOf(e2) &&
+                    !e.isAbove(e2) &&
+                    !e.isRightOf(e2)) {
+                return e.upDistanceTo(e2) + 1;
             }
         }
-        return dist;
+        return desiredDist;
     }
 
-    static int returnCollisionDistanceDown(Entity entity, int dist) {
-        for (Entity otherEntity : allEntities) {
-            if (entity.equals(otherEntity)) continue;
-            if (entity.y + entity.height + dist >= otherEntity.y && entity.y < otherEntity.y + otherEntity.height && entity.x + entity.width > otherEntity.x && !(entity.x > otherEntity.x + otherEntity.width)) {
-
-                return otherEntity.y - entity.y - entity.height - 1;
+    static int possibleTravelDistanceDown(Entity e, int desiredDist) {
+        for (Entity e2 : allEntities) {
+            if (e.equals(e2)) continue;
+            if (downSideYPos(e) + desiredDist >= e2.y &&
+                    !e.isUnderneath(e2) &&
+                    !e.isLeftOf(e2) &&
+                    !e.isRightOf(e2)) {
+                return e.downDistanceTo(e2) - 1;
             }
         }
-        return dist;
+        return desiredDist;
+    }
+
+    private static int rightSideXPos(Entity e) {
+        return e.x + e.width;
+    }
+
+    private static int downSideYPos(Entity e) {
+        return e.y + e.height;
+    }
+
+    private int rightDistanceTo(Entity e2) {
+        return e2.x - rightSideXPos(this);
+    }
+
+    private int upDistanceTo(Entity e2) {
+        return downSideYPos(e2) - this.y;
+    }
+
+    private int downDistanceTo(Entity e2) {
+        return e2.y - downSideYPos(this);
+    }
+
+    private int leftDistanceTo(Entity e2) {
+        return rightSideXPos(e2) - this.x;
+    }
+
+    private boolean isUnderneath(Entity e2) {
+        return this.y > downSideYPos(e2);
+    }
+
+    private boolean isAbove(Entity e2) {
+        return downSideYPos(this) < e2.y;
+    }
+
+    private boolean isRightOf(Entity e2) {
+        return this.x > rightSideXPos(e2);
+    }
+
+    private boolean isLeftOf(Entity e2) {
+        return rightSideXPos(this) < e2.x;
+    }
+
+    public static Sprite createSprite() {
+        Sprite sprite;
+        try {
+            return new Sprite(ImageIO.read(new File("res/moose.png")));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 

@@ -1,6 +1,8 @@
 import entity.Entity;
 import entity.Player;
-import input.KeyboardListener;
+import entity.Tile;
+import input.KeyboardListenerImpl;
+import input.MouseListenerImpl;
 import level.Level;
 
 import javax.swing.*;
@@ -11,22 +13,26 @@ public class Game extends Canvas implements Runnable {
     private static final long serialVersionUID = 1L;
 
     private static final String GAME_TITLE = "NatturaFighting";
+    private static final double DESIRED_UPS = 60.0;
     private boolean running = false;
     private int ups, fps = 0;
 
     private Thread thread;
     private JFrame frame;
-    private KeyboardListener input;
+    private KeyboardListenerImpl input;
+    private MouseListenerImpl mouse;
     private Player player;
 
     private Game() {
         frame = new JFrame();
-        input = new KeyboardListener();
+        input = new KeyboardListenerImpl();
+        mouse = new MouseListenerImpl();
 
         player = new Player(input, 0, 0, 50, 50, Color.RED, null);
         new Level(player).generateLevel();
 
         addKeyListener(input);
+        addMouseListener(mouse);
     }
 
     private synchronized void start() {
@@ -36,27 +42,33 @@ public class Game extends Canvas implements Runnable {
     }
 
     public void run() {
-        long lastTime = System.nanoTime();
-        long timer = System.currentTimeMillis();
-        final double ns = 1000000000.0 / 60.0;
+        long last = System.nanoTime();
+        long lastMillis = System.currentTimeMillis();
+        final double oneSecondInNs = 1000000000.0;
+        final double maxNsPerUpdate = oneSecondInNs / DESIRED_UPS;
         double delta = 0;
-        int frames = 0;
+
         int updates = 0;
-        requestFocus();
+        int frames = 0;
+
+        requestFocusInWindow();
+
         while (running) {
             long now = System.nanoTime();
-            delta += (now - lastTime) / ns;
-            lastTime = now;
-            while (delta >= 1) {
+            delta += now - last;
+            last = now;
+
+            if (delta >= maxNsPerUpdate) {
                 update();
                 updates++;
                 delta = 0;
             }
+
             render();
             frames++;
 
-            if (System.currentTimeMillis() - timer > 1000) {
-                timer += 1000;
+            if (System.currentTimeMillis() - lastMillis > 1000) {
+                lastMillis += 1000;
                 ups = updates;
                 fps = frames;
                 updates = 0;
@@ -103,6 +115,12 @@ public class Game extends Canvas implements Runnable {
             frame.dispose();
             System.exit(0);
         }
+
+        if (mouse.pressed) {
+            Tile tile = new Tile(mouse.lastPoint.x, mouse.lastPoint.y, 40, 40, Color.CYAN);
+            Entity.allEntities.add(tile);
+        }
+
         input.update();
     }
 
@@ -112,9 +130,13 @@ public class Game extends Canvas implements Runnable {
         game.frame.add(game);
         game.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         game.frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        game.frame.setUndecorated(true);
+        game.frame.setUndecorated(false);
         game.frame.setVisible(true);
-        game.frame.requestFocus();
+
+        game.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+
+/*        game.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB) {
+        }, new Point(1, 1), "NoCursor"));*/
 
         game.start();
     }
