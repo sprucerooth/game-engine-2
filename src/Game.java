@@ -45,7 +45,7 @@ public class Game extends Canvas implements Runnable {
         long last = System.nanoTime();
         long lastMillis = System.currentTimeMillis();
         final double oneSecondInNs = 1000000000.0;
-        final double maxNsPerUpdate = oneSecondInNs / DESIRED_UPS;
+        final double nsPerUpdate = oneSecondInNs / DESIRED_UPS;
         double delta = 0;
 
         int updates = 0;
@@ -58,7 +58,7 @@ public class Game extends Canvas implements Runnable {
             delta += now - last;
             last = now;
 
-            if (delta >= maxNsPerUpdate) {
+            if (delta >= nsPerUpdate) {
                 update();
                 updates++;
                 delta = 0;

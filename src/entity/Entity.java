@@ -1,11 +1,6 @@
 package entity;
 
-import graphics.Sprite;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,106 +27,135 @@ public abstract class Entity {
     public abstract void draw(Graphics g);
 
     static int possibleTravelDistanceRight(Entity e, int desiredDist) {
+        int possibleDistance = desiredDist;
         for (Entity e2 : allEntities) {
             if (e.equals(e2)) continue;
-            if (rightSideXPos(e) + desiredDist >= e2.x &&
-                    !e.isRightOf(e2) &&
-                    !(downSideYPos(e) + e.yMove < e2.y) &&
-                    !(e.y + e.yMove > downSideYPos(e2))) {
-                return e.rightDistanceTo(e2) - 1;
+            if (e.x2WouldCollideWith(e2, desiredDist)) {
+                possibleDistance = Math.min(e.rightDistanceTo(e2) - 1, possibleDistance);
             }
         }
-        return desiredDist;
+        return possibleDistance;
     }
 
     static int possibleTravelDistanceLeft(Entity e, int desiredDist) {
+        int possibleDistance = desiredDist;
         for (Entity e2 : allEntities) {
             if (e.equals(e2)) continue;
-            if (e.x + desiredDist <= rightSideXPos(e2) &&
-                    !e.isLeftOf(e2) &&
-                    !(downSideYPos(e) + e.yMove < e2.y) &&
-                    !(e.y + e.yMove > downSideYPos(e2))) {
-                return e.leftDistanceTo(e2) + 1;
+            if (e.xWouldCollideWith(e2, desiredDist)) {
+                possibleDistance = Math.max(e.leftDistanceTo(e2) + 1, possibleDistance);
             }
         }
-        return desiredDist;
+        return possibleDistance;
     }
 
     static double possibleTravelDistanceUp(Entity e, double desiredDist) {
+        double possibleDistance = desiredDist;
         for (Entity e2 : allEntities) {
             if (e.equals(e2)) continue;
-            if (e.y + desiredDist <= downSideYPos(e2) &&
-                    !e.isLeftOf(e2) &&
-                    !e.isAbove(e2) &&
-                    !e.isRightOf(e2)) {
-                return e.upDistanceTo(e2) + 1;
+            if (e.yWouldCollideWith(e2, desiredDist)) {
+                possibleDistance = Math.max(e.upDistanceTo(e2) + 1, possibleDistance);
             }
         }
-        return desiredDist;
+        return possibleDistance;
     }
 
-    static int possibleTravelDistanceDown(Entity e, int desiredDist) {
+    static int possibleTravelDistanceDown(Entity e, final int desiredDist) {
+        int possibleDistance = desiredDist;
         for (Entity e2 : allEntities) {
             if (e.equals(e2)) continue;
-            if (downSideYPos(e) + desiredDist >= e2.y &&
-                    !e.isUnderneath(e2) &&
-                    !e.isLeftOf(e2) &&
-                    !e.isRightOf(e2)) {
-                return e.downDistanceTo(e2) - 1;
+            if (e.y2WouldCollideWith(e2, desiredDist)) {
+                possibleDistance = Math.min(e.downDistanceTo(e2) - 1, possibleDistance);
             }
         }
-        return desiredDist;
+        return possibleDistance;
     }
 
-    private static int rightSideXPos(Entity e) {
-        return e.x + e.width;
+    private boolean y2WouldCollideWith(Entity e2, int distance) {
+        return y2() + distance >= e2.y && isDirectlyAbove(e2);
     }
 
-    private static int downSideYPos(Entity e) {
-        return e.y + e.height;
+    private boolean yWouldCollideWith(Entity e2, double distance) {
+        return y + distance <= e2.y2() && isDirectlyUnder(e2);
+    }
+
+    private boolean x2WouldCollideWith(Entity e2, double distance) {
+        return x2() + distance >= e2.x && isDirectlyLeftOf(e2);
+    }
+
+    private boolean xWouldCollideWith(Entity e2, double distance) {
+        return x + distance <= e2.x2() && isDirectlyRightOf(e2);
+    }
+
+    private int x2() {
+        return this.x + this.width;
+    }
+
+    private int y2() {
+        return this.y + this.height;
     }
 
     private int rightDistanceTo(Entity e2) {
-        return e2.x - rightSideXPos(this);
+        return e2.x - x2();
     }
 
     private int upDistanceTo(Entity e2) {
-        return downSideYPos(e2) - this.y;
+        return e2.y2() - this.y;
     }
 
     private int downDistanceTo(Entity e2) {
-        return e2.y - downSideYPos(this);
+        return e2.y - y2();
     }
 
     private int leftDistanceTo(Entity e2) {
-        return rightSideXPos(e2) - this.x;
+        return e2.x2() - this.x;
     }
 
-    private boolean isUnderneath(Entity e2) {
-        return this.y > downSideYPos(e2);
+    private boolean isUnder(Entity e2) {
+        return this.y > e2.y2();
     }
 
     private boolean isAbove(Entity e2) {
-        return downSideYPos(this) < e2.y;
+        return this.y2() < e2.y;
+    }
+
+    private boolean isDirectlyAbove(Entity e2) {
+        return !isUnder(e2) &&
+                !isLeftOf(e2) &&
+                !isRightOf(e2);
+    }
+
+    private boolean isDirectlyUnder(Entity e2) {
+        return !isLeftOf(e2) &&
+                !isAbove(e2) &&
+                !isRightOf(e2);
+    }
+
+
+    private boolean isDirectlyLeftOf(Entity e2) {
+        return isLeftOf(e2) &&
+                !isAbove(e2) &&
+                !isUnder(e2);
+    }
+
+    private boolean isDirectlyRightOf(Entity e2) {
+        return isRightOf(e2) &&
+                !isAbove(e2) &&
+                !isUnder(e2);
     }
 
     private boolean isRightOf(Entity e2) {
-        return this.x > rightSideXPos(e2);
+        return this.x > e2.x2();
     }
 
     private boolean isLeftOf(Entity e2) {
-        return rightSideXPos(this) < e2.x;
-    }
-
-    public static Sprite createSprite() {
-        Sprite sprite;
-        try {
-            return new Sprite(ImageIO.read(new File("res/moose.png")));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return x2() < e2.x;
     }
 
 
 }
+
+/*
+        return allEntities.stream()
+                .filter(e2 -> !e2.equals(e) && e.wouldCollideWith(e2, desiredDist))
+                .mapToInt(e2 -> e.downDistanceTo(e2) - 1).filter(i -> i < desiredDist)
+        .min().orElse(desiredDist);*/

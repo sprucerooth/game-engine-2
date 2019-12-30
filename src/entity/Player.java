@@ -37,6 +37,16 @@ public class Player extends Being {
         yMove = 0;
     }
 
+    public void reset() {
+        inAir = false;
+        jumping = false;
+        spaceAbove = false;
+        inAirTick = 0;
+        x = 580;
+        y = 200;
+        xMove = yMove = 0;
+    }
+
     private void checkGravity() {
         if (!inAir || hittingTheHead()) {
             jumping = false;
@@ -64,9 +74,7 @@ public class Player extends Being {
         }
 
         if (input.space) {
-            x = 980;
-            y = 100;
-            xMove = yMove = inAirTick = 0;
+            reset();
         }
 
     }
