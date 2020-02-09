@@ -1,46 +1,13 @@
 package level;
 
-import entity.Player;
-import entity.Tile;
-import graphics.Screen;
-
 import java.awt.*;
 
-public class Level {
+public interface Level {
 
-    private int width, height;
-    private Player player;
+    void generate();
 
-    public Level(int width, int height, Player player) {
-        this.width = width;
-        this.height = height;
-        this.player = player;
-    }
+    void update();
 
-    public Level(final Player player) {
-        this.player = player;
-        player.x = 980;
-        player.y = 700;
-    }
-
-    public void generateLevel() {
-
-        new Tile(200, 1000, 1500, 50, Color.BLUE);
-        new Tile(1000, 850, 200, 50, Color.RED);
-        new Tile(900, 800, 350, 150, Color.RED);
-        new Tile(300, 950, 200, 200, Color.RED);
-    }
-
-    private void loadLevel(String path) {
-        //load level file
-    }
-
-    public void update() {
-
-    }
-
-    public void render(Screen screen) {
-
-    }
+    void render(Graphics g);
 
 }

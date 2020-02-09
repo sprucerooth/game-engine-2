@@ -1,9 +1,11 @@
+package main;
+
 import entity.Entity;
 import entity.Player;
-import entity.Tile;
-import input.KeyboardListenerImpl;
+import input.KeyListenerImpl;
 import input.MouseListenerImpl;
 import level.Level;
+import level.Level1;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,40 +14,35 @@ import java.awt.image.BufferStrategy;
 public class Game extends Canvas implements Runnable {
     private static final long serialVersionUID = 1L;
 
-    private static final String GAME_TITLE = "NatturaFighting";
-    private static final double DESIRED_UPS = 60.0;
+    private static final String TITLE = "NatturaFighting";
+    private static final double UPS = 60.0;
     private boolean running = false;
     private int ups, fps = 0;
 
     private Thread thread;
     private JFrame frame;
-    private KeyboardListenerImpl input;
-    private MouseListenerImpl mouse;
-    private Player player;
+    private KeyListenerImpl keyInput;
+    private MouseListenerImpl mouseInput;
+    private Level currentLevel;
 
     private Game() {
         frame = new JFrame();
-        input = new KeyboardListenerImpl();
-        mouse = new MouseListenerImpl();
 
-        player = new Player(input, 0, 0, 50, 50, Color.RED, null);
-        new Level(player).generateLevel();
+        keyInput = new KeyListenerImpl();
+        mouseInput = new MouseListenerImpl();
+        addKeyListener(keyInput);
+        addMouseListener(mouseInput);
 
-        addKeyListener(input);
-        addMouseListener(mouse);
+        currentLevel = /*new MainMenu(this, keyInput);*/ new Level1(this, new Player(keyInput, mouseInput));
+        currentLevel.generate();
     }
 
-    private synchronized void start() {
-        thread = new Thread(this, "Display");
-        thread.start();
-        running = true;
-    }
-
+    // Game loop
     public void run() {
         long last = System.nanoTime();
         long lastMillis = System.currentTimeMillis();
-        final double oneSecondInNs = 1000000000.0;
-        final double nsPerUpdate = oneSecondInNs / DESIRED_UPS;
+        final double oneSecInNanoSec = 1000000000.0;
+        final double nanoSecPerUpdate = oneSecInNanoSec / UPS;
         double delta = 0;
 
         int updates = 0;
@@ -58,7 +55,7 @@ public class Game extends Canvas implements Runnable {
             delta += now - last;
             last = now;
 
-            if (delta >= nsPerUpdate) {
+            if (delta >= nanoSecPerUpdate) {
                 update();
                 updates++;
                 delta = 0;
@@ -77,8 +74,16 @@ public class Game extends Canvas implements Runnable {
         }
     }
 
+    public void startGame() {
+        Level newLevel = new Level1(this, new Player(keyInput, mouseInput));
+        newLevel.generate();
+        currentLevel = newLevel;
+    }
+
+
     private void update() {
         checkInput();
+        currentLevel.update();
         Entity.allEntities.forEach(Entity::update);
     }
 
@@ -90,7 +95,7 @@ public class Game extends Canvas implements Runnable {
         BufferStrategy bs = getBufferStrategy();
         Graphics g = bs.getDrawGraphics();
 
-        fillBackground(g);
+        currentLevel.render(g);
         Entity.allEntities.forEach(e -> e.draw(g));
         drawStrings(g);
 
@@ -98,30 +103,30 @@ public class Game extends Canvas implements Runnable {
         bs.show();
     }
 
-    private void fillBackground(Graphics g) {
-        g.setColor(new Color(0x0101010));
-        g.fillRect(0, 0, getWidth(), getHeight());
-    }
-
     private void drawStrings(Graphics g) {
         g.setColor(Color.white);
-        g.drawString("Pos x: " + player.x, 50, 50);
-        g.drawString("Pos y: " + player.y, 50, 70);
-        g.drawString(GAME_TITLE + " | " + ups + "ups, " + fps + "fps", 800, 50);
+        g.drawString(TITLE + " | " + ups + "ups, " + fps + "fps", 800, 50);
     }
 
     private void checkInput() {
-        if (input.esc) {
+        if (keyInput.esc) {
             frame.dispose();
             System.exit(0);
         }
 
-        if (mouse.pressed) {
-            Tile tile = new Tile(mouse.lastPoint.x, mouse.lastPoint.y, 40, 40, Color.CYAN);
-            Entity.allEntities.add(tile);
-        }
+        keyInput.update();
+    }
 
-        input.update();
+    private synchronized void start() {
+        thread = new Thread(this, "Display");
+        thread.start();
+        running = true;
+    }
+
+    public void stop() {
+        running = false;
+        frame.dispose();
+        System.exit(0);
     }
 
     public static void main(String[] args) {

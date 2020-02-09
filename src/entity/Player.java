@@ -1,13 +1,14 @@
 package entity;
 
-import graphics.Sprite;
-import input.KeyboardListenerImpl;
+import input.KeyListenerImpl;
+import input.MouseListenerImpl;
 
 import java.awt.*;
 
 public class Player extends Being {
 
-    private final KeyboardListenerImpl input;
+    private final KeyListenerImpl keyInput;
+    private final MouseListenerImpl mouseInput;
     private final double jumpForce = 25;
     private final double gravity = 1.8;
     private final double runSpeed = 5;
@@ -15,15 +16,19 @@ public class Player extends Being {
     private boolean inAir, jumping, spaceAbove = false;
     private double inAirTick = 0;
 
-    public Player(KeyboardListenerImpl input, int x, int y, int width, int height, Color color, final Sprite sprite) {
-        super(x, y, width, height, color, sprite);
-        this.input = input;
+    public Player(KeyListenerImpl keyInput, MouseListenerImpl mouseInput) {
+        super(0, 0, 50, 50, Color.RED, null);
+        this.keyInput = keyInput;
+        this.mouseInput = mouseInput;
     }
 
     @Override
     public void draw(Graphics g) {
         g.setColor(color);
         g.drawRect(x, y, width, height);
+        g.setColor(Color.white);
+        g.drawString("Pos x: " + x, 50, 50);
+        g.drawString("Pos y: " + y, 50, 70);
     }
 
     @Override
@@ -59,7 +64,7 @@ public class Player extends Being {
     }
 
     private void checkInput() {
-        if (input.up) {
+        if (keyInput.up) {
             if (!inAir) {
                 yMove = -jumpForce + gForce();
                 inAirTick++;
@@ -67,14 +72,19 @@ public class Player extends Being {
             }
         }
 
-        if (input.left) {
+        if (keyInput.left) {
             xMove = -runSpeed;
-        } else if (input.right) {
+        } else if (keyInput.right) {
             xMove = runSpeed;
         }
 
-        if (input.space) {
+        if (keyInput.space) {
             reset();
+        }
+
+        if (mouseInput.pressed) {
+            Tile tile = new Tile(mouseInput.lastPoint.x, mouseInput.lastPoint.y, 40, 40, Color.CYAN);
+            Entity.allEntities.add(tile);
         }
 
     }
