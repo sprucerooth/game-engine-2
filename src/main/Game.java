@@ -10,9 +10,14 @@ import level.Level1;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
 
 public class Game extends Canvas implements Runnable {
     private static final long serialVersionUID = 1L;
+
+    public static final int width = (int) (1200 * 1.2);
+    public static final int height = (int) (700 * 1.2);
+
 
     private static final String TITLE = "NatturaFighting";
     private static final double UPS = 60.0;
@@ -27,6 +32,8 @@ public class Game extends Canvas implements Runnable {
 
     private Game() {
         frame = new JFrame();
+
+        setPreferredSize(new Dimension(width, height));
 
         keyInput = new KeyListenerImpl();
         mouseInput = new MouseListenerImpl();
@@ -132,16 +139,16 @@ public class Game extends Canvas implements Runnable {
     public static void main(String[] args) {
         Game game = new Game();
         game.frame.setResizable(false);
-        game.frame.add(game);
+        game.frame.setUndecorated(true);
+        game.frame.getContentPane().setBackground(Color.BLACK);
+        game.frame.getContentPane().setLayout(new GridBagLayout());
+        game.frame.getContentPane().add(game, new GridBagConstraints());
+        game.frame.pack();
         game.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         game.frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        game.frame.setUndecorated(false);
         game.frame.setVisible(true);
-
-        game.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-
-/*        game.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB) {
-        }, new Point(1, 1), "NoCursor"));*/
+        game.frame.getContentPane().setCursor(Toolkit.getDefaultToolkit().createCustomCursor(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB) {
+        }, new Point(1, 1), "NoCursor"));
 
         game.start();
     }
